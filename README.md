@@ -64,6 +64,8 @@ graph TD
 
 ## ▶️ Usage
 
+<img width="1338" height="372" alt="image" src="https://github.com/user-attachments/assets/34593855-9da1-4f84-9881-8aaef2634b93" />
+
 Send a `POST` request to your n8n instance:
 
 ```bash
