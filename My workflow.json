@@ -12,7 +12,7 @@
       "typeVersion": 2.1,
       "position": [
         -1344,
-        -560
+        -736
       ],
       "id": "e2732874-1d7d-4e0c-a1d4-e1b948eab736",
       "name": "Webhook",
@@ -28,7 +28,7 @@
       "typeVersion": 3.4,
       "position": [
         -1120,
-        -560
+        -736
       ],
       "id": "250296a0-a8c6-4d66-97e5-4415dbaa7be6",
       "name": "Edit Fields",
@@ -45,8 +45,8 @@
       "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
       "typeVersion": 1,
       "position": [
-        -528,
-        -736
+        -416,
+        -992
       ],
       "id": "e3d8f1f5-d0a8-40e0-b8bd-ec185030b825",
       "name": "Google Gemini Chat Model",
@@ -59,36 +59,13 @@
     },
     {
       "parameters": {
-        "promptType": "define",
-        "text": "=Seed keyword: {{ $json[\"seedKeyword\"] }} Goal: produce a wide set of long-tail, question, comparative, and modifier keywords relevant to the seed. Output format: JSON array of strings, e.g. [\"global internship programs\", \"international internships for students\", ...] Max keywords: {{ $json.numExpansion }} Exclude: brand names, obvious duplicates.",
-        "hasOutputParser": true,
-        "messages": {
-          "messageValues": [
-            {
-              "message": "You are an expert SEO keyword researcher. Generate diverse keyword ideas derived from the seed keyword. Output only a JSON array of keywords (strings). Do not provide any other text."
-            }
-          ]
-        },
-        "batching": {}
-      },
-      "type": "@n8n/n8n-nodes-langchain.chainLlm",
-      "typeVersion": 1.7,
-      "position": [
-        -896,
-        -560
-      ],
-      "id": "5fbc20bf-6a41-4ea4-9844-2c272d4664a8",
-      "name": "Basic LLM Chain"
-    },
-    {
-      "parameters": {
         "jsCode": "// Step 1: Get the raw text from the first item\nlet rawText = items[0].json.text;\n\n// Step 2: Clean up the string (remove ```json and ``` if present)\nrawText = rawText.replace(/```json\\s*/, \"\").replace(/```/, \"\").trim();\n\n// Step 3: Parse the JSON array\nconst keywordsArray = JSON.parse(rawText);\n\n// Step 4: Return as a single object with a 'keywords' property\nreturn [{ json: { keywords: keywordsArray } }];\n"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
         -544,
-        -560
+        -736
       ],
       "id": "6ea7bea4-27de-42cd-bb2a-c5ebd3e03d06",
       "name": "Code in JavaScript1"
@@ -111,7 +88,7 @@
       "typeVersion": 3.4,
       "position": [
         -320,
-        -560
+        -736
       ],
       "id": "752396c2-3791-43d0-bc42-e81ef83c67ce",
       "name": "Edit Fields1"
@@ -139,7 +116,7 @@
       "typeVersion": 4.2,
       "position": [
         -96,
-        -560
+        -736
       ],
       "id": "c060cc36-d79e-41b1-a16a-e36562f7c57b",
       "name": "HTTP Request1"
@@ -152,7 +129,7 @@
       "typeVersion": 2,
       "position": [
         128,
-        -560
+        -736
       ],
       "id": "689cd5f7-9184-40a7-ac77-81a7c59e048f",
       "name": "Code in JavaScript"
@@ -173,7 +150,7 @@
       "typeVersion": 2.1,
       "position": [
         352,
-        -560
+        -736
       ],
       "id": "58386248-6582-4ce6-a8c1-a76590103351",
       "name": "Send email",
@@ -184,6 +161,155 @@
           "name": "SMTP account"
         }
       }
+    },
+    {
+      "parameters": {
+        "content": "Receives input JSON with `seed` keyword + `recipient email`.",
+        "height": 80,
+        "width": 176
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -1392,
+        -832
+      ],
+      "typeVersion": 1,
+      "id": "f59fd36d-0192-4740-b030-403c68c66041",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "content": "Maps incoming `seed` into seedKeyword and sets `expansion count`.",
+        "height": 80,
+        "width": 192,
+        "color": 2
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -1168,
+        -576
+      ],
+      "typeVersion": 1,
+      "id": "b9780f99-6cda-43ba-b4be-efd118415915",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "content": "Uses Google Gemini to generate related keyword ideas.",
+        "height": 80,
+        "width": 176,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -864,
+        -832
+      ],
+      "typeVersion": 1,
+      "id": "ee5c94c1-0414-481d-936c-48f0e3c0ce69",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Seed keyword: {{ $json[\"seedKeyword\"] }} Goal: produce a wide set of long-tail, question, comparative, and modifier keywords relevant to the seed. Output format: JSON array of strings, e.g. [\"global internship programs\", \"international internships for students\", ...] Max keywords: {{ $json.numExpansion }} Exclude: brand names, obvious duplicates.",
+        "hasOutputParser": true,
+        "messages": {
+          "messageValues": [
+            {
+              "message": "You are an expert SEO keyword researcher. Generate diverse keyword ideas derived from the seed keyword. Output only a JSON array of keywords (strings). Do not provide any other text."
+            }
+          ]
+        },
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.7,
+      "position": [
+        -896,
+        -736
+      ],
+      "id": "5fbc20bf-6a41-4ea4-9844-2c272d4664a8",
+      "name": "Basic LLM Chain"
+    },
+    {
+      "parameters": {
+        "content": "Cleans Gemini output (removes ```json wrappers) and parses array of keywords.",
+        "height": 96,
+        "width": 176,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -576,
+        -592
+      ],
+      "typeVersion": 1,
+      "id": "c6eddc2f-47df-45cf-a7ba-21dd012a8d9e",
+      "name": "Sticky Note3"
+    },
+    {
+      "parameters": {
+        "content": "Formats `keywords` into the structure expected by `DataForSEO API`.",
+        "height": 80,
+        "width": 176,
+        "color": 5
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -352,
+        -832
+      ],
+      "typeVersion": 1,
+      "id": "26e4f00a-bcef-43bb-a779-22988867a895",
+      "name": "Sticky Note4"
+    },
+    {
+      "parameters": {
+        "content": "Calls DataForSEO Search Volume endpoint to fetch `keyword metrics`.",
+        "height": 80,
+        "width": 208,
+        "color": 6
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -144,
+        -576
+      ],
+      "typeVersion": 1,
+      "id": "b85fcde1-5bd4-47de-a627-a2b92be419f5",
+      "name": "Sticky Note5"
+    },
+    {
+      "parameters": {
+        "content": "Applies ranking formula, sorts `top 50`, converts to `CSV`, stores as binary.",
+        "height": 80,
+        "width": 192,
+        "color": 7
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        80,
+        -832
+      ],
+      "typeVersion": 1,
+      "id": "b9220e99-0e7a-47a6-9f3d-59c7cfc95ed7",
+      "name": "Sticky Note6"
+    },
+    {
+      "parameters": {
+        "content": "Sends `CSV` attachment to provided email address.",
+        "height": 80,
+        "width": 192
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        320,
+        -576
+      ],
+      "typeVersion": 1,
+      "id": "75001431-18b6-465d-9a58-57e6cfa26a32",
+      "name": "Sticky Note7"
     }
   ],
   "pinData": {},
@@ -215,17 +341,6 @@
         [
           {
             "node": "Basic LLM Chain",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Basic LLM Chain": {
-      "main": [
-        [
-          {
-            "node": "Code in JavaScript1",
             "type": "main",
             "index": 0
           }
@@ -280,13 +395,24 @@
       "main": [
         []
       ]
+    },
+    "Basic LLM Chain": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "active": false,
   "settings": {
     "executionOrder": "v1"
   },
-  "versionId": "8abfdb24-2c15-417b-a679-fcebc4abf696",
+  "versionId": "9d81566d-ce38-4d09-8046-3e44ddb1d151",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "a9547718ced31316eb0ee21f2d333c804fd45b86920b3645ceba7ccaa160ae89"
