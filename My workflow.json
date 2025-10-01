@@ -1,0 +1,296 @@
+{
+  "name": "My workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "keyword-research",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -1344,
+        -560
+      ],
+      "id": "e2732874-1d7d-4e0c-a1d4-e1b948eab736",
+      "name": "Webhook",
+      "webhookId": "2268236e-bf35-4fa4-a129-7ce29b44517d"
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "={\n  \"seedKeyword\": \"{{$json.body.seed}}\",\n  \"numExpansion\": 10\n}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -1120,
+        -560
+      ],
+      "id": "250296a0-a8c6-4d66-97e5-4415dbaa7be6",
+      "name": "Edit Fields",
+      "alwaysOutputData": false
+    },
+    {
+      "parameters": {
+        "options": {
+          "temperature": 0.2,
+          "topK": 40,
+          "topP": 0.9
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        -528,
+        -736
+      ],
+      "id": "e3d8f1f5-d0a8-40e0-b8bd-ec185030b825",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "StHajul4O5qOEas0",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Seed keyword: {{ $json[\"seedKeyword\"] }} Goal: produce a wide set of long-tail, question, comparative, and modifier keywords relevant to the seed. Output format: JSON array of strings, e.g. [\"global internship programs\", \"international internships for students\", ...] Max keywords: {{ $json.numExpansion }} Exclude: brand names, obvious duplicates.",
+        "hasOutputParser": true,
+        "messages": {
+          "messageValues": [
+            {
+              "message": "You are an expert SEO keyword researcher. Generate diverse keyword ideas derived from the seed keyword. Output only a JSON array of keywords (strings). Do not provide any other text."
+            }
+          ]
+        },
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.7,
+      "position": [
+        -896,
+        -560
+      ],
+      "id": "5fbc20bf-6a41-4ea4-9844-2c272d4664a8",
+      "name": "Basic LLM Chain"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Step 1: Get the raw text from the first item\nlet rawText = items[0].json.text;\n\n// Step 2: Clean up the string (remove ```json and ``` if present)\nrawText = rawText.replace(/```json\\s*/, \"\").replace(/```/, \"\").trim();\n\n// Step 3: Parse the JSON array\nconst keywordsArray = JSON.parse(rawText);\n\n// Step 4: Return as a single object with a 'keywords' property\nreturn [{ json: { keywords: keywordsArray } }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -544,
+        -560
+      ],
+      "id": "6ea7bea4-27de-42cd-bb2a-c5ebd3e03d06",
+      "name": "Code in JavaScript1"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "34682018-ab5f-4233-8c40-2645b5ea2528",
+              "name": "keywordsData",
+              "value": "={{ $json.keywords }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -320,
+        -560
+      ],
+      "id": "752396c2-3791-43d0-bc42-e81ef83c67ce",
+      "name": "Edit Fields1"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.dataforseo.com/v3/keywords_data/google_ads/search_volume/live",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Basic dms1MDIyQHNybWlzdC5lZHUuaW46NDk5YWQ5MzFjZjcyZjc1YQ=="
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "=[\n    {\n        \"location_code\": 2840,\n        \"keywords\": {{ $json.keywordsData }},\n        \"date_from\": \"2025-01-01\",\n        \"search_partners\": true\n    }\n]",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -96,
+        -560
+      ],
+      "id": "c060cc36-d79e-41b1-a16a-e36562f7c57b",
+      "name": "HTTP Request1"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Step 1: Take the raw DataForSEO response\nconst response = items[0].json;\n\n// Step 2: Drill into tasks → result\nlet results = [];\nfor (const task of response.tasks) {\n  if (task.result) {\n    for (const r of task.result) {\n      results.push({\n        keyword: r.keyword,\n        search_volume: r.search_volume || 0,\n        competition_index: r.competition_index || 0,\n        cpc: r.cpc || 0,\n      });\n    }\n  }\n}\n\n// Step 3: Apply scoring formula (considering search volume, competition, and CPC)\nresults = results.map(r => {\n  const cpcFactor = r.cpc + 0.1; // avoid division by zero\n  const score = (r.search_volume * cpcFactor) / (r.competition_index + 1);\n  return { ...r, score };\n});\n\n// Step 4: Sort by score descending\nresults.sort((a, b) => b.score - a.score);\n\n// Step 5: Take top 50\nconst top50 = results.slice(0, 50);\n\n// Step 6: Convert to CSV for email attachment\nconst fields = [\"keyword\", \"search_volume\", \"competition_index\", \"cpc\", \"score\"];\nlet csv = fields.join(\",\") + \"\\n\";\n\nfor (const r of top50) {\n  const row = fields.map(f => r[f]).join(\",\");\n  csv += row + \"\\n\";\n}\n\n// Step 7: Return CSV as binary for email attachment\nreturn [\n  {\n    json: {},\n    binary: {\n      data: {\n        data: Buffer.from(csv).toString(\"base64\"),\n        mimeType: \"text/csv\",\n        fileName: \"top50_keywords.csv\"\n      }\n    }\n  }\n];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        128,
+        -560
+      ],
+      "id": "689cd5f7-9184-40a7-ac77-81a7c59e048f",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "fromEmail": "niteeshleela@gmail.com",
+        "toEmail": "={{ $('Webhook').item.json.body.mailto }}",
+        "subject": "Top 50 Keywords Report",
+        "emailFormat": "text",
+        "text": "Attached is the top 50 keyword report.",
+        "options": {
+          "appendAttribution": false,
+          "attachments": "=data"
+        }
+      },
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        352,
+        -560
+      ],
+      "id": "58386248-6582-4ce6-a8c1-a76590103351",
+      "name": "Send email",
+      "webhookId": "e554b914-5cd2-4110-9652-1d8560811b6d",
+      "credentials": {
+        "smtp": {
+          "id": "GlABacGWe5rCh4RS",
+          "name": "SMTP account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Basic LLM Chain": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript1": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields1": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request1": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Send email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send email": {
+      "main": [
+        []
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "8abfdb24-2c15-417b-a679-fcebc4abf696",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "a9547718ced31316eb0ee21f2d333c804fd45b86920b3645ceba7ccaa160ae89"
+  },
+  "id": "wy86Cj0dSzau3lNu",
+  "tags": []
+}
